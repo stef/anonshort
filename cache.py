@@ -92,9 +92,10 @@ def query_db(query, params=[]):
         db.commit()
         return (cursor.fetchone() or [None])[0]
 
-#initdb()
-#set('http://t.co/yBFrn5Nm', 'http://www.laquadrature.net/node/5011')
-#print get('http://t.co/yBFrn5Nm')
-#set('http://t.ce/yBFrn5Nm', 'http://wwe.laquadrature.net/node/5011')
-#print get('http://t.ce/yBFrn5Nm')
-#db.close()
+if __name__ == "__main__":
+    initdb()
+    #set('http://t.co/yBFrn5Nm', 'http://www.laquadrature.net/node/5011')
+    #print get('http://t.co/yBFrn5Nm')
+    #set('http://t.ce/yBFrn5Nm', 'http://wwe.laquadrature.net/node/5011')
+    #print get('http://t.ce/yBFrn5Nm')
+    #db.close()
