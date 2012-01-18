@@ -21,13 +21,13 @@
 PROXY={'host': "localhost",
        'port': 8118 }
 
-import re, urllib2, cookielib, time
+import re, urllib2, cookielib, time, sys
 from urlparse import urlparse, urlunparse
 from itertools import ifilterfalse
 import urllib, httplib
 from lxml.html.soupparser import parse
 
-utmRe=re.compile('utm_(source|medium|campaign|content)=')
+utmRe=re.compile('utm_(source|medium|campaign|content|term)=')
 def urlSanitize(url, ua=None):
     # handle any redirected urls from the feed, like
     # ('http://feedproxy.google.com/~r/Torrentfreak/~3/8UY1UySQe1k/')
@@ -73,4 +73,6 @@ def unshorten(url, ua=None):
 
 if __name__ == "__main__":
     url="http://bit.ly/xJ5pK2"
+    if len(sys.argv)>1:
+        url=sys.argv[1]
     print unshorten(url)
