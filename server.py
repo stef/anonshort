@@ -28,6 +28,7 @@ class Simple(resource.Resource):
     def render_GET(self, request):
         if request.args and len(request.args.get('u')):
             return unshorten(request.args.get('u')[0])
+        return ""
 
 site = server.Site(Simple())
 reactor.listenTCP(8080, site)
