@@ -26,6 +26,7 @@ from urlparse import urlparse, urlunparse
 from itertools import ifilterfalse
 import urllib, httplib
 from lxml.html.soupparser import parse
+from cache import get, set
 
 utmRe=re.compile('utm_(source|medium|campaign|content|term)=')
 def urlSanitize(url, ua=None):
@@ -65,10 +66,14 @@ def unmeta(url,root):
 
 def unshorten(url, ua=None):
     prev=None
+    origurl=url
     while url!=prev:
+        cached=get(url)
+        if cached: return cached
         prev=url
         url,root=urlSanitize(url,ua=ua)
         url=unmeta(url,root)
+    set(origurl,url)
     return url
 
 if __name__ == "__main__":

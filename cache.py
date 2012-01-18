@@ -66,8 +66,6 @@ def set(key,value):
     value += chr(0x08) * (-len(value) % bsize)
     ciphertext = ''.join([cipher.encrypt(value[i*bsize:(i+1)*bsize])
                           for i in range(len(value)/bsize)])
-    print 'write', B, b64encode(ciphertext)
-
     # store B: base64(aes(C,value))
     query_db('INSERT INTO urlcache (key, value) VALUES (?, ?)',
              (B, b64encode(ciphertext)))
@@ -76,7 +74,6 @@ def get(key):
     # calculate keys
     B, C = get_key(key)
     value = query_db("SELECT value FROM urlcache WHERE key == ? LIMIT 1", (B,))
-    print 'read', B, value
     if value:
         # decode value
         value=b64decode(value)
@@ -96,6 +93,8 @@ def query_db(query, params=[]):
         return (cursor.fetchone() or [None])[0]
 
 #initdb()
-set('http://t.co/yBFrn5Nm', 'http://www.laquadrature.net/node/5011')
-print get('http://t.co/yBFrn5Nm')
-db.close()
+#set('http://t.co/yBFrn5Nm', 'http://www.laquadrature.net/node/5011')
+#print get('http://t.co/yBFrn5Nm')
+#set('http://t.ce/yBFrn5Nm', 'http://wwe.laquadrature.net/node/5011')
+#print get('http://t.ce/yBFrn5Nm')
+#db.close()
