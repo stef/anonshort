@@ -60,7 +60,10 @@ def urlSanitize(url):
     pcs=urlparse(urllib.unquote_plus(url))
     tmp=list(pcs)
     tmp[4]='&'.join(ifilterfalse(utmRe.match, pcs.query.split('&')))
-    return (urlunparse(tmp), parse(res))
+    root=None
+    if res and res.getheader('Content-type')=='text/html':
+        root=parse(res)
+    return (urlunparse(tmp), root)
 
 def unmeta(url,root):
     for x in root.xpath('//meta[@http-equiv="refresh"]'):
@@ -82,7 +85,8 @@ def unshorten(url):
         if cached: return cached
         prev=url
         url,root=urlSanitize(url)
-        url=unmeta(url,root)
+        if root:
+            url=unmeta(url,root)
     set(origurl,url)
     return url
 
