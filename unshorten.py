@@ -20,6 +20,8 @@
 
 PROXY={'host': "localhost",
        'port': 8118 }
+UADB='agents.db'
+DEFAULTUA='Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 
 import re, urllib2, cookielib, time, sys
 from urlparse import urlparse, urlunparse
@@ -27,9 +29,10 @@ from itertools import ifilterfalse
 import urllib, httplib
 from lxml.html.soupparser import parse
 from cache import get, set
+from random_agent import RandomAgent
 
 utmRe=re.compile('utm_(source|medium|campaign|content|term)=')
-def urlSanitize(url, ua=None):
+def urlSanitize(url):
     # handle any redirected urls from the feed, like
     # ('http://feedproxy.google.com/~r/Torrentfreak/~3/8UY1UySQe1k/')
     us=httplib.urlsplit(url)
@@ -44,7 +47,11 @@ def urlSanitize(url, ua=None):
         conn = httplib.HTTPConnection(PROXY['host'],PROXY['port'])
         req = url
     #conn.set_debuglevel(9)
-    headers={'User-Agent': ua or 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'}
+    if UADB:
+        ua=RandomAgent(UADB).get_agent()
+    else:
+        ua=DEFAULTUA
+    headers={'User-Agent': ua }
     conn.request("GET", url, None, headers)
     res = conn.getresponse()
     if res.status in [301, 304]:
@@ -64,7 +71,7 @@ def unmeta(url,root):
                 url=newurl
     return url
 
-def unshorten(url, ua=None):
+def unshorten(url):
     prev=None
     origurl=url
     seen=[]
@@ -74,7 +81,7 @@ def unshorten(url, ua=None):
         cached=get(url)
         if cached: return cached
         prev=url
-        url,root=urlSanitize(url,ua=ua)
+        url,root=urlSanitize(url)
         url=unmeta(url,root)
     set(origurl,url)
     return url
