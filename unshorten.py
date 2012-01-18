@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# This file is part of unshorten.
+#
+#  unshorten is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  unshorten is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with unshorten.  If not, see <http://www.gnu.org/licenses/>.
+#
+# (C) 2012- by Stefan Marsiske, <stefan.marsiske@gmail.com>
+
+
+import re
+from urlparse import urlparse, urlunparse
+from itertools import ifilterfalse
+import urllib, httplib
+
+utmRe=re.compile('utm_(source|medium|campaign|content)=')
+def urlSanitize(url, ua=None):
+    # handle any redirected urls from the feed, like
+    # ('http://feedproxy.google.com/~r/Torrentfreak/~3/8UY1UySQe1k/')
+    us=httplib.urlsplit(url)
+    if us.scheme=='http':
+        conn = httplib.HTTPConnection(us.netloc)
+        req = urllib.quote(url[7+len(us.netloc):])
+    elif us.scheme=='https':
+        conn = httplib.HTTPSConnection(us.netloc)
+        req = urllib.quote(url[8+len(us.netloc):])
+    #conn.set_debuglevel(9)
+    headers={'User-Agent': ua or 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'}
+    conn.request("HEAD", req,None,headers)
+    res = conn.getresponse()
+    if res.status in [301, 304]:
+        url = res.getheader('Location')
+    # removes annoying UTM params to urls.
+    pcs=urlparse(urllib.unquote_plus(url))
+    tmp=list(pcs)
+    tmp[4]='&'.join(ifilterfalse(utmRe.match, pcs.query.split('&')))
+    return urlunparse(tmp)
+
+def unshorten(url, ua=None):
+    prev=None
+    while url!=prev:
+        prev=url
+        url=urlSanitize(url,ua=ua)
+    return url
+
+url="http://bit.ly/xJ5pK2"
+print unshorten(url)
