@@ -65,5 +65,6 @@ def unshorten(url, ua=None):
         url=unmeta(url,root)
     return url
 
-url="http://bit.ly/xJ5pK2"
-print unshorten(url)
+if __name__ == "__main__":
+    url="http://bit.ly/xJ5pK2"
+    print unshorten(url)
