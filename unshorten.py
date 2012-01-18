@@ -67,12 +67,16 @@ def unmeta(url,root):
 def unshorten(url, ua=None):
     prev=None
     origurl=url
+    seen=[]
     while url!=prev:
         cached=get(url)
         if cached: return cached
         prev=url
         url,root=urlSanitize(url,ua=ua)
+        if url in seen: return
         url=unmeta(url,root)
+        if url in seen: return
+        seen.append(url)
     set(origurl,url)
     return url
 
