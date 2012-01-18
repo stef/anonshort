@@ -18,6 +18,8 @@
 #
 # (C) 2012- by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
+PROXY={'host': "localhost",
+       'port': 8118 }
 
 import re, urllib2, cookielib, time
 from urlparse import urlparse, urlunparse
@@ -30,15 +32,19 @@ def urlSanitize(url, ua=None):
     # handle any redirected urls from the feed, like
     # ('http://feedproxy.google.com/~r/Torrentfreak/~3/8UY1UySQe1k/')
     us=httplib.urlsplit(url)
-    if us.scheme=='http':
-        conn = httplib.HTTPConnection(us.netloc)
-        req = urllib.quote(url[7+len(us.netloc):])
-    elif us.scheme=='https':
-        conn = httplib.HTTPSConnection(us.netloc)
-        req = urllib.quote(url[8+len(us.netloc):])
+    if not PROXY:
+        if us.scheme=='http':
+            conn = httplib.HTTPConnection(us.netloc)
+            req = urllib.quote(url[7+len(us.netloc):])
+        elif us.scheme=='https':
+            conn = httplib.HTTPSConnection(us.netloc)
+            req = urllib.quote(url[8+len(us.netloc):])
+    else:
+        conn = httplib.HTTPConnection(PROXY['host'],PROXY['port'])
+        req = url
     #conn.set_debuglevel(9)
     headers={'User-Agent': ua or 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'}
-    conn.request("GET", req,None,headers)
+    conn.request("GET", url, None, headers)
     res = conn.getresponse()
     if res.status in [301, 304]:
         url = res.getheader('Location')
