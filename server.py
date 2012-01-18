@@ -26,7 +26,8 @@ from twisted.internet import reactor
 class Simple(resource.Resource):
     isLeaf = True
     def render_GET(self, request):
-        return unshorten(request.args.get('u')[0])
+        if request.args and len(request.args.get('u')):
+            return unshorten(request.args.get('u')[0])
 
 site = server.Site(Simple())
 reactor.listenTCP(8080, site)
