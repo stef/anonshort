@@ -47,7 +47,7 @@ def urlSanitize(url):
         conn = httplib.HTTPConnection(PROXY['host'],PROXY['port'])
         req = url
     #conn.set_debuglevel(9)
-    if UADB and us.netloc not in ['t.co']:
+    if UADB:
         ua=RandomAgent(UADB).get_agent()
     else:
         ua=DEFAULTUA
@@ -62,19 +62,21 @@ def urlSanitize(url):
     tmp=list(pcs)
     tmp[4]='&'.join(ifilterfalse(utmRe.match, pcs.query.split('&')))
     root=None
-    if res and res.getheader('Content-type')=='text/html':
+    if res and res.getheader('Content-type').startswith('text/html'):
         root=parse(res)
     return (urlunparse(tmp), root)
 
 def unmeta(url,root):
     for x in root.xpath('//meta[@http-equiv="refresh"]'):
-        newurl=x.get('content').split('; ')
+        newurl=x.get('content').split(';')
         if len(newurl)>1:
-            parts=urlparse(urllib.unquote_plus(newurl[1]))
-            if parts['scheme'] and parts['netloc'] and parts['path']:
+            newurl=newurl[1].strip()[4:]
+            parts=httplib.urlsplit(urllib.unquote_plus(newurl))
+            if parts.scheme and parts.netloc and parts.path:
                 url=newurl
     return url
 
+from lxml.etree import tostring
 def unshorten(url):
     prev=None
     origurl=url
