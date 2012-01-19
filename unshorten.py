@@ -47,11 +47,12 @@ def urlSanitize(url):
         conn = httplib.HTTPConnection(PROXY['host'],PROXY['port'])
         req = url
     #conn.set_debuglevel(9)
-    if UADB:
+    if UADB and us.netloc not in ['t.co']:
         ua=RandomAgent(UADB).get_agent()
     else:
         ua=DEFAULTUA
-    headers={'User-Agent': ua }
+    headers={'User-Agent': ua,
+             'Accept': '*/*',}
     conn.request("GET", url, None, headers)
     res = conn.getresponse()
     if res.status in [301, 304]:
