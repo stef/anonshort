@@ -62,7 +62,7 @@ def urlSanitize(url):
     tmp=list(pcs)
     tmp[4]='&'.join(ifilterfalse(utmRe.match, pcs.query.split('&')))
     root=None
-    if res and res.getheader('Content-type').startswith('text/html'):
+    if res and (res.getheader('Content-type') or "").startswith('text/html'):
         root=parse(res)
     return (urlunparse(tmp), root)
 
