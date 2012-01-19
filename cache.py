@@ -32,12 +32,13 @@
 from __future__ import with_statement
 import hmac, hashlib
 from Crypto.Cipher import AES
+from Crypto import Random
 from contextlib import closing
 from base64 import b64encode, b64decode
 import sqlite3
 
+SALT="3j3,xiDS"
 db = sqlite3.connect("cache.db")
-salt="3j3,xiDS"
 CREATE_SQL = """
 CREATE TABLE urlcache (key TEXT PRIMARY KEY, value TEXT);
 """
@@ -47,10 +48,27 @@ class sha512:
     def new(self, inp=''):
         return hashlib.sha512(inp)
 
-def get_key(key):
+def get_key(key,salt=SALT):
     A = hmac.new(salt, key, sha512())
     return (A.hexdigest()[:64],
             A.digest()[32:])
+
+def encrypt(C, value):
+    # encrypt value with second half of MAC
+    bsize=len(C)
+    cipher = AES.new(C, AES.MODE_OFB)
+    # pad value
+    value += chr(0x08) * (-len(value) % bsize)
+    return b64encode(''.join([cipher.encrypt(value[i*bsize:(i+1)*bsize])
+                              for i in range(len(value)/bsize)]))
+
+def decrypt(C, value):
+    # decode value
+    value=b64decode(value)
+    cipher = AES.new(C, AES.MODE_OFB)
+    bsize=len(C)
+    return ''.join([cipher.decrypt(value[i*bsize:(i+1)*bsize])
+                    for i in range(len(value)/bsize)]).rstrip(chr(0x08))
 
 def set(key,value):
     # ignore already inserted items
@@ -58,29 +76,17 @@ def set(key,value):
 
     # calculate keys
     B, C = get_key(key)
-
-    # encrypt value with second half of MAC
-    bsize=len(C)
-    cipher = AES.new(C, AES.MODE_OFB)
-    # pad value
-    value += chr(0x08) * (-len(value) % bsize)
-    ciphertext = ''.join([cipher.encrypt(value[i*bsize:(i+1)*bsize])
-                          for i in range(len(value)/bsize)])
+    ciphertext = encrypt(C, value)
     # store B: base64(aes(C,value))
     query_db('INSERT INTO urlcache (key, value) VALUES (?, ?)',
-             (B, b64encode(ciphertext)))
+             (B, ciphertext))
 
 def get(key):
     # calculate keys
     B, C = get_key(key)
     value = query_db("SELECT value FROM urlcache WHERE key == ? LIMIT 1", (B,))
     if value:
-        # decode value
-        value=b64decode(value)
-        cipher = AES.new(C, AES.MODE_OFB)
-        bsize=len(C)
-        return ''.join([cipher.decrypt(value[i*bsize:(i+1)*bsize])
-                        for i in range(len(value)/bsize)]).rstrip(chr(0x08))
+        return decrypt(C, value)
 
 def initdb():
     cursor = db.cursor()
@@ -92,10 +98,30 @@ def query_db(query, params=[]):
         db.commit()
         return (cursor.fetchone() or [None])[0]
 
+def salt(key, value):
+    salt_size=3
+    salt=Random.get_random_bytes(salt_size)
+    hash=get_key(key,salt)
+    print bytearray(salt), hash
+    ciphertext=encrypt(hash[1],value)
+    print decrypt(hash[1],ciphertext)
+
+    for s in xrange(pow(2,salt_size*8)):
+        res=[]
+        for i in xrange(salt_size):
+            res.append(s & 0xff)
+            s=s >> 8
+        s=bytearray(res)
+        k=get_key(key,s)
+        #value = query_db("SELECT value FROM urlcache WHERE key == ? LIMIT 1", (B,))
+        #if value:
+        #    print i
+        #    return value
+        if k[0]==hash[0]:
+            print bytearray(s), k
+            print decrypt(k[1],ciphertext)
+            break
+
 if __name__ == "__main__":
-    initdb()
-    #set('http://t.co/yBFrn5Nm', 'http://www.laquadrature.net/node/5011')
-    #print get('http://t.co/yBFrn5Nm')
-    #set('http://t.ce/yBFrn5Nm', 'http://wwe.laquadrature.net/node/5011')
-    #print get('http://t.ce/yBFrn5Nm')
-    #db.close()
+    #initdb()
+    print salt("http://bit.ly/xJ5pK2", "ctrlc.hu")
