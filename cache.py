@@ -36,21 +36,15 @@ from contextlib import closing
 from base64 import b64encode, b64decode
 import sqlite3
 
+SALT="3j3,xiDS"
 db = sqlite3.connect("cache.db")
-salt="3j3,xiDS"
 CREATE_SQL = """
 CREATE TABLE urlcache (key TEXT PRIMARY KEY, value TEXT);
 """
 
-class sha512:
-    digest_size = 64
-    def new(self, inp=''):
-        return hashlib.sha512(inp)
-
-def get_key(key):
-    A = hmac.new(salt, key, sha512())
-    return (A.hexdigest()[:64],
-            A.digest()[32:])
+def initdb():
+    cursor = db.cursor()
+    cursor.executescript(CREATE_SQL)
 
 def set(key,value):
     # ignore already inserted items
@@ -58,33 +52,17 @@ def set(key,value):
 
     # calculate keys
     B, C = get_key(key)
-
-    # encrypt value with second half of MAC
-    bsize=len(C)
-    cipher = AES.new(C, AES.MODE_OFB)
-    # pad value
-    value += chr(0x08) * (-len(value) % bsize)
-    ciphertext = ''.join([cipher.encrypt(value[i*bsize:(i+1)*bsize])
-                          for i in range(len(value)/bsize)])
+    ciphertext = encrypt(C, value)
     # store B: base64(aes(C,value))
     query_db('INSERT INTO urlcache (key, value) VALUES (?, ?)',
-             (B, b64encode(ciphertext)))
+             (B, ciphertext))
 
 def get(key):
     # calculate keys
     B, C = get_key(key)
     value = query_db("SELECT value FROM urlcache WHERE key == ? LIMIT 1", (B,))
     if value:
-        # decode value
-        value=b64decode(value)
-        cipher = AES.new(C, AES.MODE_OFB)
-        bsize=len(C)
-        return ''.join([cipher.decrypt(value[i*bsize:(i+1)*bsize])
-                        for i in range(len(value)/bsize)]).rstrip(chr(0x08))
-
-def initdb():
-    cursor = db.cursor()
-    cursor.executescript(CREATE_SQL)
+        return decrypt(C, value)
 
 def query_db(query, params=[]):
     with closing(db.cursor()) as cursor:
@@ -92,10 +70,32 @@ def query_db(query, params=[]):
         db.commit()
         return (cursor.fetchone() or [None])[0]
 
+class sha512:
+    digest_size = 64
+    def new(self, inp=''):
+        return hashlib.sha512(inp)
+
+def get_key(key,salt=SALT):
+    A = hmac.new(salt, key, sha512())
+    return (A.hexdigest()[:64],
+            A.digest()[32:])
+
+def encrypt(C, value):
+    # encrypt value with second half of MAC
+    bsize=len(C)
+    cipher = AES.new(C, AES.MODE_OFB)
+    # pad value
+    value += chr(0x08) * (-len(value) % bsize)
+    return b64encode(''.join([cipher.encrypt(value[i*bsize:(i+1)*bsize])
+                              for i in range(len(value)/bsize)]))
+
+def decrypt(C, value):
+    # decode value
+    value=b64decode(value)
+    cipher = AES.new(C, AES.MODE_OFB)
+    bsize=len(C)
+    return ''.join([cipher.decrypt(value[i*bsize:(i+1)*bsize])
+                    for i in range(len(value)/bsize)]).rstrip(chr(0x08))
+
 if __name__ == "__main__":
     initdb()
-    #set('http://t.co/yBFrn5Nm', 'http://www.laquadrature.net/node/5011')
-    #print get('http://t.co/yBFrn5Nm')
-    #set('http://t.ce/yBFrn5Nm', 'http://wwe.laquadrature.net/node/5011')
-    #print get('http://t.ce/yBFrn5Nm')
-    #db.close()
