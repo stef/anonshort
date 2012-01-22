@@ -39,7 +39,7 @@ try:
     UADB = cfg.get('resolver','uadb')
 except:
     pass
-utmRe=re.compile('(fb_(ref|source|action_ids|action_types)|utm_(source|medium|campaign|content|term))=')
+utmRe=re.compile('(fb_(comment_id|ref|source|action_ids|action_types)|utm_(source|medium|campaign|content|term))=')
 def urlSanitize(url):
     # handle any redirected urls from the feed, like
     # ('http://feedproxy.google.com/~r/Torrentfreak/~3/8UY1UySQe1k/')
