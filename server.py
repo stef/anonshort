@@ -33,7 +33,7 @@ class Simple(resource.Resource):
 
 site = server.Site(Simple())
 reactor.listenTCP(cfg.getint('anonshort','port'), site)
-if cfg.get('ssl','key') and cfg.get('ssl','cert') and cfg.get('ssl','port'):
+if cfg.has_section('ssl'):
     # start ssl listener if configured
     reactor.listenSSL(cfg.getint('ssl','port'),
                       site,
