@@ -22,7 +22,7 @@
 from unshorten import unshorten
 from twisted.web import server, resource
 from twisted.internet import reactor, ssl
-
+from config import cfg
 
 class Simple(resource.Resource):
     isLeaf = True
@@ -32,6 +32,11 @@ class Simple(resource.Resource):
         return "Error: try appending ?u=<URL>"
 
 site = server.Site(Simple())
-reactor.listenTCP(8080, site)
-reactor.listenSSL(8081, site, ssl.DefaultOpenSSLContextFactory('ssl-cert-snakeoil.key', 'ssl-cert-snakeoil.pem'))
+reactor.listenTCP(cfg.getint('anonshort','port'), site)
+if cfg.get('ssl','key') and cfg.get('ssl','cert') and cfg.get('ssl','port'):
+    # start ssl listener if configured
+    reactor.listenSSL(cfg.getint('ssl','port'),
+                      site,
+                      ssl.DefaultOpenSSLContextFactory(cfg.get('ssl','key'),
+                                                       cfg.get('ssl','cert')))
 reactor.run()

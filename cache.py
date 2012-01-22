@@ -36,13 +36,20 @@ from contextlib import closing
 from base64 import b64encode, b64decode
 import sqlite3
 
+# some default
 SALT="3j3,xiDS"
-db = sqlite3.connect("cache.db")
-CREATE_SQL = """
-CREATE TABLE urlcache (key TEXT PRIMARY KEY, value TEXT);
-"""
+
+try:
+    from config import cfg
+    SALT=cfg.get('cache','salt')
+    db = sqlite3.connect(cfg.get('cache','db'))
+except:
+    db = sqlite3.connect("cache.db")
 
 def initdb():
+    CREATE_SQL = """
+CREATE TABLE urlcache (key TEXT PRIMARY KEY, value TEXT);
+"""
     cursor = db.cursor()
     cursor.executescript(CREATE_SQL)
 

@@ -18,10 +18,10 @@
 #
 # (C) 2012- by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-PROXY={'host': "localhost",
-       'port': 8118 }
-UADB='agents.db'
+PROXYHOST = "localhost"
+PROXYPORT = 8118
 DEFAULTUA='Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+UADB='agents.db'
 
 import re, urllib2, cookielib, time, sys
 from urlparse import urlparse, urlunparse
@@ -31,12 +31,21 @@ from lxml.html.soupparser import parse
 from cache import get, set
 from random_agent import RandomAgent
 
+try:
+    from config import cfg
+    PROXYHOST = cfg.get('proxy','host')
+    PROXYPORT = cfg.get('proxy','port')
+    DEFAULTUA = cfg.get('resolver','defaultua')
+    UADB = cfg.get('resolver','uadb')
+except:
+    pass
+
 utmRe=re.compile('utm_(source|medium|campaign|content|term)=')
 def urlSanitize(url):
     # handle any redirected urls from the feed, like
     # ('http://feedproxy.google.com/~r/Torrentfreak/~3/8UY1UySQe1k/')
     us=httplib.urlsplit(url)
-    if not PROXY:
+    if not PROXYHOST:
         if us.scheme=='http':
             conn = httplib.HTTPConnection(us.netloc)
             req = urllib.quote(url[7+len(us.netloc):])
@@ -44,7 +53,7 @@ def urlSanitize(url):
             conn = httplib.HTTPSConnection(us.netloc)
             req = urllib.quote(url[8+len(us.netloc):])
     else:
-        conn = httplib.HTTPConnection(PROXY['host'],PROXY['port'])
+        conn = httplib.HTTPConnection(PROXYHOST,PROXYPORT)
         req = url
     #conn.set_debuglevel(9)
     if UADB:
