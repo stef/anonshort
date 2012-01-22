@@ -21,7 +21,8 @@
 
 from unshorten import unshorten
 from twisted.web import server, resource
-from twisted.internet import reactor
+from twisted.internet import reactor, ssl
+
 
 class Simple(resource.Resource):
     isLeaf = True
@@ -32,4 +33,5 @@ class Simple(resource.Resource):
 
 site = server.Site(Simple())
 reactor.listenTCP(8080, site)
+reactor.listenSSL(8081, site, ssl.DefaultOpenSSLContextFactory('ssl-cert-snakeoil.key', 'ssl-cert-snakeoil.pem'))
 reactor.run()
