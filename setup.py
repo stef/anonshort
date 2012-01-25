@@ -18,7 +18,7 @@ setup(
     keywords = "URL HTTP sanitizing privacy web service",
     url = "http://packages.python.org/urlclean",
     py_modules=['anonshort' ],
-    long_description=read('README.rst'),
+    long_description=read('README.md'),
     install_requires = ("urlclean", "persistent_crypto_dict"),
     classifiers = ["Development Status :: 4 - Beta",
                    "License :: OSI Approved :: GNU Affero General Public License v3",
