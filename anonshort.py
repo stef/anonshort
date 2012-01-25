@@ -32,7 +32,8 @@ cfg.read('anonshort.cfg')
 
 class Simple(resource.Resource):
     isLeaf = True
-    cache = PersistentCryptoDict()
+    cache = PersistentCryptoDict(filename=cfg.get('cache','db'),
+                                 salt=cfg.get('cache','salt'))
     def render_GET(self, request):
         if request.args and len(request.args.get('u')):
             try:
