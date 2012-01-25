@@ -20,13 +20,13 @@
 
 from twisted.web import server, resource
 from twisted.internet import reactor, ssl
-import ConfigParser
+from ConfigParser import SafeConfigParser
 
 from urlclean import unshorten
 from pcd import PersistentCryptoDict
 from random_agent import RandomAgent
 
-cfg = ConfigParser.SafeConfigParser()
+cfg = SafeConfigParser()
 cfg.read('/etc/anonshort.cfg')
 cfg.read('anonshort.cfg')
 
